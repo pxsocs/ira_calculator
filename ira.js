@@ -1,6 +1,8 @@
 $(document).ready(function () {
 
-    window.btcPrice = 0;
+    $('#advanced_button').on('click', redirectToAdvancedCalculator);
+
+    window.btcPrice = 30000;
 
     // Bitcoin Scenarios
     window.scenarios = {
@@ -57,8 +59,6 @@ $(document).ready(function () {
     // Update the maximum contribution amount when age or income input changes
     $('#age, #income').on('input change', function () {
         const age = parseInt($('#age').val());
-        const income = parseFloat($('#income').val().replace(/[$,]/g, ''));
-        updateMaxContribution(age, income);
         calculate();
     });
 
@@ -71,13 +71,6 @@ $(document).ready(function () {
         calculate();
     });
 
-    // Fetch Latest BTC_Price
-    fetch("/realtime_btc")
-        .then((response) => response.json())
-        .then((data) => {
-            window.btcPrice = data.btc_usd;
-            calculate();
-        });
 
 
 
@@ -123,14 +116,14 @@ function calculate() {
     const age = parseInt($('#age').val());
     const income = 100000;
     const savings = parseFloat($('#savings').val().replace(/,/g, ''));
-    const retirementAge = 67;
+    const retirementAge = 65;
     const annualContribution = parseFloat($('#annualContribution').val().replace(/,/g, ''));
     const taxStatus = "single"
 
     $("#btc_price").text(formatNumber(window.btcPrice, 0, '$'));
 
     // Update the maximum contribution amount
-    updateMaxContribution(age, income);
+    // updateMaxContribution(age, income);
 
     // Calculate tax savings
     const effectiveTaxRate = calculateEffectiveTaxRate(taxStatus, income);
@@ -205,8 +198,16 @@ function calculate() {
     $('#savings-balance').html("<i class='fa-solid fa-caret-up fa-sm text-muted'></i>&nbsp;$ " + formatNumber(difference, 0));
     $('#bitcoin-balance').html("<i class='fa-solid fa-caret-up fa-sm text-muted'></i>&nbsp;$ " + formatNumber(bitcoindiff, 0));
 
+    savings_multiple = bitcoindiff / fullIraValue;
+    if (savings_multiple < 1) {
+        savings_multiple = (savings_multiple) * 100;
+        $('#savings_multiple').html("(" + formatNumber(savings_multiple, 2) + "%)");
+    } else {
+        savings_multiple = savings_multiple + 1;
+        $('#savings_multiple').html("(" + formatNumber(savings_multiple, 2) + "x)");
+    };
     // Update Max Contribution
-    updateMaxContribution(age, income);
+    // updateMaxContribution(age, income);
 
 
     createChart(years, iraValues, fullIra, taxableValues);
@@ -431,3 +432,17 @@ const taxBrackets = {
 };
 
 
+function redirectToAdvancedCalculator() {
+    const age = encodeURIComponent($('#age').val());
+    const savings = encodeURIComponent($('#savings').val());
+    const annualContribution = encodeURIComponent($('#annualContribution').val());
+    const allocation = encodeURIComponent($('#allocation-slider').val());
+    const income = 100000;
+    const retirementAge = 67;
+    const taxStatus = "single"
+
+    const queryParams = `?age=${age}&savings=${savings}&annualContribution=${annualContribution}&allocation=${allocation}&income=${income}&retirementAge=${retirementAge}&taxStatus=${taxStatus}`;
+    const url = `https://www.nakamotoportfolio.com/apps/ira/ira_client${queryParams}`;
+
+    window.open(url);
+}
